@@ -249,3 +249,53 @@ Megjegyzés: `v^t=v^t`, `m^t=s^t`
 `ReLU`
 ### 12. Egy bináris osztályozási feladatnál a modell egy valójában spam (címke: 1) e-mailre 0.1 valószínűséget jósol. Hogyan viszonyul egymáshoz a Bináris Kereszt-Entrópia és az MSE által számított hiba ebben az esetben?
 A Bináris Kereszt-Entrópia (`Binary Crossentropy`) által számított hiba ebben az esetben nagyobb, mint az `MSE` által számított hiba, hiszen az előbbi azt is bünteti, hogy a modell milyen biztossággal prediktált rosszul.
+
+# 4. Előadás
+## 4.1 Súlyinicializálás, regularizáció
+### 1. Melyik aktivációs függvényhez tervezték kifejezetten a 'He' súlyinicializálást?
+`ReLU` aktivációs függvényhez.
+
+Rövid indok: A `ReLU` aktiváció a negatív bemeneteket kinulázza, így a hagyományos inicializációs eljárások (pl.: `Xavier-Glorot`) túl kicsivé tennék a varianciát a rétegekben. A `He` inicializáció ezt javítja ki, ezzel elérve a jel/gradiens stabil áramlását a rétegekben.
+### 2. A standard Xavier inicializálási képlet szerint (egyenletes eloszlás -(1/sqrt(n))...(1/sqrt(n)) tartományban) mi történik a lehetséges súlyértékek tartományával, ha a bemeneti csomópontok száma (n) növekszik?
+A kezdeti súlyok `n` növekedésével csökkennek. (Ha `n` nő, akkor `1/sqrt(n)` csökken.)
+### 3. Mi a regularizáció elsődleges célja a gépi tanulásban?
+Annak megakadályozása, hogy a háló túltanuljon/`overfitting` megakadályozása, ezzel pedig nőjön a háló általánosítóképessége.
+### 4. Melyik paraméter normabüntetés ismert arról, hogy ritka (sparse) megoldásokat eredményez, azaz egyes súlyokat pontosan nullára állít?
+`L1`/`Lasso` regularizáció.
+### 5. Mit eredményez az L1 és mit az L2 regularizáció a modell súlyaira nézve?
+Az `L1`/`Lasso` regularizáció - ahogyan azt az előző kérdés is megfogalmazta - "sparse"/ritka súlyokat eredményez, hiszen arra ösztönzi a hálót, hogy bizonyos súlyokat nullára állítson. Ezzel szemben az `L2`/`Ridge` regularizáció megakadályozza a hálót abban, hogy bizonyos súlyai extrém nagyok legyenek.
+### 6. Hogyan módosítja az L2 regularizáció (weight decay) a súlyok frissítését egyetlen gradiens lépés során?
+$L_{\text{total}}=L_{\text{eredeti}} + \frac{\lambda}{2}\sum_i w_i^2$
+
+A fenti kifejezésből a második tag a regularizációs tag. Ennek deriváltja adott súlykomponenst véve: $\frac{\delta}{\delta w_i}\frac{\lambda}{2}w_i^2 = \lambda w_i$.
+
+Azaz a súlyfrissítést tekintve $w_i$-re: $w_i \leftarrow w_i - \eta(\frac{\delta L_{\text{eredeti}}}{\delta w_i} + \lambda w_i)$.
+
+Összefoglalva minden egyes lépésben - az adott súly nagyságával arányosan - csökkenti a súlyt az `L2` regularizáció.
+### 7. Mi a „korai leállítás” (early stopping) regularizációs technika alapvető működési elve?
+Az `early stopping` lényege, hogy tanítás közben a validációs adathalmazon is mérjük a modell hibáját. Ha az itt mért hiba nem javul egymást követő `x` epoch-on keresztül, akkor a tanítást leállítjuk - `x` egy előre beállított hiperparaméter. Ezzel gyakorlatilag még időben, az előtt leállítjuk a tanítást, mielőtt a modell még túltanult.
+### 8. A dropout technikát melyik ensemble módszer egy számításilag hatékony közelítéseként lehet értelmezni?
+`Bagging`/`Bootstrap aggregating`: Sok kisebb, különböző hálót tanítunk - az eredeti adathalmazból mintavételezett adatokon (többszörös `bootstrap` minták) -, majd ezek előrejelzéseit átlagoljuk.
+### 9. A normalizált Xavier inicializálás képlete (egyenletes eloszlás a -(sqrt(6)/sqrt(n+m))...(sqrt(6)/sqrt(n+m)) tartományban). Mit jelöl a képletben az 'm' változó?
+`m` következő réteg neuronjainak a száma.
+
+Megjegyzés: `n` az előző réteg neuronjainak a száma.
+### 10. Miért nem szokták a torzítási (bias) paramétereket regularizálni a paraméter normabüntetésekkel (pl. L1, L2)?
+A regularizáció célja a modell komplexitásának csökkentése és a túltanulás elkerülése a súlyok révén. A `bias` egyrészt nem növeli a modell komplexitását, másrészt a regularizálása torzíthatná a modell kimenetét, illetve csökkenthetné a tanítás hatékonyságát, hiszen a neuronok kimenete folyamatosan "lecsökkentett" lenne.
+### 11. A képek elforgatása vagy eltolása a tanító adathalmazon belül melyik regularizációs stratégiára példa?
+Adataugmentáció.
+### 12. Mi történik, ha túl kicsi vagy túl nagy súlyokkal incializálunk egy neurális hálózatot?
+Túl kicsi súlyok esetén a `vanishing gradient` jelensége, míg túl nagy súlyok esetén az `exploding gradient` jelensége lép fel. Mindkettő a tanítást teszi nehezzébé/lehetetleníti el.
+### 13. Mik az elsődleges regularizációs technikák neurális hálózatokban?
+- `L0`, `L1 (Lasso)`, `L2 (Ridge)`, `L-inf` regularizáció
+- `Early stopping`
+- `Dropout`
+- `Batch/Layer Normalization`
+- `Data augmentation`
+- `Residual connections`
+### 14. Hasonlítsa össze a DropOut és a BatchNorm regularizcáiós technikákat?
+A két regularizációs technika mind működésben, mind hatásban különbözik. A `Dropout` a tanítás során véletlenszerűen kikapcsol bizonyos neuronokat - inferencia során nem aktív. Ezzel gyakorlatilag azt előzi meg, hogy a hálóban bizonyos neuronok tanuljanak meg "mindent" és így csökkenti a túlilleszkedést. Természetesen ez a tanítás gyorsaságát is csökkenti.
+
+Ezzel szemben a `Batch Normalization` minden batch-re kiszámítja az aktivációk átlagát és szórását, majd normalizálja ezeket és opcionálisan skálázza/eltolja őket. Kisebb mértékben járul hozzá a háló túlilleszkedésének megakadályozásához, ugyanakkor növeli a gradiens stabilitását. `Batch Normalization` alkalmazásával növelhetjük a tanítás gyorsaságát, illetve a `Dropout`-tal szemben inferencia közben is használt - ilyenkor a számításokat különböző statisztikák alapján végzi el.
+### 15. A Batch Normalization eljárás esetén hogyan érdemes a mini-batch méretet megválasztani? Miért?
+Célszerű minél nagyobbra megválasztani. Ennek oka, hogy a `Batch Normalization` a `batch` aktivációinak átlagát és szórását használja a normalizációhoz. Ahhoz, hogy ezek a statisztikák reprezentálják az egész adathalmazt, a `batch`-nek elég nagy számú mintát kell tartalmaznia. Ha a `batch` mérete túl kicsi, akkor az átlag és a szórás értékei zajosak lehetnek, ami instabil tanuláshoz vezet.
