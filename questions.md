@@ -299,3 +299,130 @@ A két regularizációs technika mind működésben, mind hatásban különbözi
 Ezzel szemben a `Batch Normalization` minden batch-re kiszámítja az aktivációk átlagát és szórását, majd normalizálja ezeket és opcionálisan skálázza/eltolja őket. Kisebb mértékben járul hozzá a háló túlilleszkedésének megakadályozásához, ugyanakkor növeli a gradiens stabilitását. `Batch Normalization` alkalmazásával növelhetjük a tanítás gyorsaságát, illetve a `Dropout`-tal szemben inferencia közben is használt - ilyenkor a számításokat különböző statisztikák alapján végzi el.
 ### 15. A Batch Normalization eljárás esetén hogyan érdemes a mini-batch méretet megválasztani? Miért?
 Célszerű minél nagyobbra megválasztani. Ennek oka, hogy a `Batch Normalization` a `batch` aktivációinak átlagát és szórását használja a normalizációhoz. Ahhoz, hogy ezek a statisztikák reprezentálják az egész adathalmazt, a `batch`-nek elég nagy számú mintát kell tartalmaznia. Ha a `batch` mérete túl kicsi, akkor az átlag és a szórás értékei zajosak lehetnek, ami instabil tanuláshoz vezet.
+
+# 6. Előadás
+## 6.1 Keras alapok, hiperparaméter optimalizáció
+### 1. Mi különbözteti meg a hiperparamétereket a modell paramétereitől a mélytanulás kontextusában?
+A hiperparaméterek alatt azon paramétereket értjük, amelyek magát a tanítás folyamatát befolyásolják, mint például az epoch-ok száma, batch mérete vagy akár a learning rate.
+
+A modell paraméterei alatt a modellhez expliciten kapcsolódó paramétereket értjük, mint például a modell súlyainak, illetve bias-einek az értékei. Ezen paraméterek a tanítás során változnak.
+### 2. Hogyan definiálsz Keras-ban egy neurális hálózatot? Hogyan tanítod be a hálózatot?
+A Keras-ban a hálózatot leggyakrabban a Sequential API vagy a Functional API segítségével definiáljuk. A Sequential API-val egymás után fűzött rétegeket hozunk létre, meghatározva a rétegek típusát, neuronszámát és aktivációs függvényét.
+
+```python
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+model = Sequential([
+    Dense(64, activation='relu', input_shape=(input_dim,)),
+    Dense(32, activation='relu'),
+    Dense(num_classes, activation='softmax')
+])
+```
+
+A hálózat tanítása előtt a modell kompilálni kell, ahol megadjuk az optimalizálót, a veszteségfüggvényt és a teljesítménymérő metrikákat.
+
+```python
+model.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+```
+
+Ezután a `fit()` metódussal tanítjuk a hálózatot, megadva az adatokat, az epoch-ok számát, a batch méretét és opcionálisan a validációs adathalmazt.
+
+```python
+model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
+```
+
+### 3. Mi a legfontosabb tényező a sikeres modell ensemble (modell együttes) létrehozásához?
+A sikeres modell ensemble legfontosabb tényezője a modellek különbözősége, azaz hogy eltérő hibákat kövessenek el. Ez biztosítja, hogy az együttes jobb általánosítást érjen el, mintha egyetlen modellt használnánk. Diverzitást elérhetünk különböző architektúrákkal, hiperparaméterekkel vagy adatrészletekkel.
+### 4. Milyen esetben választanád elsődlegesen a modell-parallelizmust az adat-parallelizmussal szemben?
+Túlságosan nagy méretű modellek esetén, azaz amikor a modell túl nagy ahhoz, hogy egyetlen GPU memóriájába beleférjen.
+
+Ilyenkor az adatparallelizmussal szemben -, ahol a teljes modellt minden eszközön futtatjuk, de különböző adatbatch-ekkel - a modell különböző részeit több eszköz között osztjuk szét.
+### 5. Mi az elsődleges célja a vegyes pontosságú (mixed-precision) tanításnak (pl. `mixed_float16`) ahelyett, hogy a teljes tanítási folyamat során csak `float16`-ot használnánk?
+Az, hogy gyorsítsa a számításokat és csökkentse a memóriaigényt, úgy, hogy közben megőrizze a numerikus stabilitást.
+### 6. A KerasTuner esetében mi a modellépítő funkció (vagy `HyperModel` osztály) feladata?
+A feladata az, hogy definiálja a modell architektúráját és megadja, mely hiperparaméterek hangolhatók. A KerasTuner ezt a függvényt hívja meg minden próbálkozásnál, hogy különböző hiperparaméter-kombinációkkal új modellt hozzon létre és kiértékeljen.
+### 7. Melyik Keras API biztosítja a legnagyobb rugalmasságot, lehetővé téve a nem aciklikus gráfstruktúrájú modellek létrehozását, de cserébe elveszít olyan funkciókat, mint a modell topológiájának ábrázolása?
+Model Subclassing API.
+### 8. A Keras funkcionális API-ban mit reprezentál egy `Input` objektum?
+Az `Input` objektum a modell bemenetét reprezentálja.
+### 9. Mi az `EarlyStopping` callback elsődleges funkciója a Kerasban?
+Az `EarlyStopping`, mint regularizációs technika megvalósítása, azaz a modell tanításának leállítása, ha annak a teljesítménye egy adott metrikán (pl.: validációs adathalmazon mért pontosság) nem javulna előre magadott számú epoch után.
+### 10. Egyedi tanítási lépés definiálásakor TensorFlow-ban miért a `tf.GradientTape()` kontextuson belül hajtjuk végre a forward pass-t?
+Azért, mert a `GradientTape` csak így tudja automatikusan nyomonkövetni azokat a műveleteket, amelyekhez később gradiensszámításra lesz szükség a backpropagation során.
+### 11. Mi az `int8` kvantálás fő célja?
+A modell méretének és számítási igényének csökkentése, miközben a teljesítmény (pontosság) csak minimálisan romlik.
+### 12. A Keras `Model` alosztályosításának mik a korlátai egy funkcionális modellhez képest?
+A `Model` alosztályosítása (Model Subclassing API) nagyobb rugalmasságot ad, de elveszítünk több kényelmi funkciót, amit a funkcionális API biztosít. Például:
+- Nincs automatikus topológia-levezetés
+- Nem működik a `model.summary()` és a grafikus megjelenítés (`plot_model()`) teljes funkcionalitása
+- Nehézkes mentés és betöltés
+- Korlátozott újrafelhasználhatóság
+## 6.2 PyTorch alapok, tenzorok, data loaderek, hiperparaméter optimalizáció
+### 1. Hogyan definiálsz PyTorch-ban egy neurális hálózatot? Hogyan tanítod be a hálózatot?
+Egy modell létrehozásához először egy osztályt kell létrehozni, amit az `nn.Module`-ból származtatunk le. Ennek `__init__` metódusában kell deklarálni a modell architektúráját felépítő rétegeket, majd a `forward` metódusában kell megadni, hogy a bemeneti adat hogyan halad végig a hálón.
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class SimpleNet(nn.Module):
+    def __init__(self, input_dim, num_classes):
+        super(SimpleNet, self).__init__()
+        self.fc1 = nn.Linear(input_dim, 64)
+        self.fc2 = nn.Linear(64, 32)
+        self.fc3 = nn.Linear(32, num_classes)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.softmax(self.fc3(x), dim=1)
+        return x
+
+input_dim = 100
+num_classes = 10
+model = SimpleNet(input_dim, num_classes)
+```
+
+A modell tanításához szükséges egy veszteségfüggvény, illetve egy optimizer megadása. Tanítás során az adathalmazon végigiterálva a modell bemenetére adjuk az adatot, majd a kimenetét, illetve az elvárt kimenetet megadjuk a veszteségfüggvénynek. Ezt követően a `loss.backward()`, illetve `optimizer.step()` segítségével végezhetjük el a hibavisszaterjesztést, majd a súlyok frissítését.
+
+```python
+def train(...):
+    # Init training, call model.to(device), model.train() etc...
+    for epoch in range(num_epochs):
+        optimizer.zero_grad()
+
+        outputs = model(inputs)
+
+        loss = loss_fn(outputs, targets)
+
+        loss.backward()
+        optimizer.step()
+```
+### 2. Mi a `torch.autograd` elsődleges feladata a PyTorch keretrendszerben?
+A `torch.autograd` a PyTorch által készített automatikus differenciáló csomag. Így elsődleges feladata a tanítás során a gradiensek automatikus kiszámolása, amelyet egy számítási gráf felépítésével végez el.
+### 3. Egy tipikus PyTorch tanítási lépésben mi a helyes sorrendje a hibavisszaterjesztés és a paraméterfrissítés műveleteinek?
+Először a hibavisszaterjesztést kell elvégezni, amellyel kiszámítjuk az egyes súlyokhoz tartozó gradienseket. Ezt követően az optimizer ezek segítségével frissíti a modell paramétereit.
+### 4. Egyedi neurális hálózat létrehozásakor a PyTorch-ban, az `nn.Module` osztály melyik metódusát kell felülírni a hálózaton áthaladó adatokkal végzett számítások definiálásához?
+A `forward()` metódust.
+### 5. Mi az egyik fő oka a `torch.no_grad()` kontextuskezelő használatának a modell inferenciája (következtetése) során?
+A `torch.no_grad()` segítségével állítjuk be a keretrendszernek, hogy a modell használata során ne számolja ki a súlyokhoz tartozó gradienseket. Ezzel pedig az inference sebességét növeljük meg. Emellett így kevesebb memóriát is használunk, hiszen a keretrendszer ilyenkor nem tárolja a számítási gráfot.
+
+Ezt azért tehetjük meg, mert inference során már nem tanítjuk a modellt, azaz felesleges kiszámolni a súlyokhoz tartozó gradienst.
+### 6. Mi történik, ha módosít egy olyan NumPy tömböt, amelyet egy CPU-n lévő PyTorch tenzorból hozott létre a `.numpy()` metódussal?
+Ha egy CPU-n lévő PyTorch tenzorból hozunk létre egy NumPy tömböt, amit módosítunk, akkor az eredeti tenzor értéke is meg fog változni. Ennek az az oka, hogy a NumPy tömb és a PyTorch tenzor ugyanarra a memóriaterületre mutat.
+### 7. Mi a fő különbség a `torch.utils.data.Dataset` és a `torch.utils.data.DataLoader` között?
+Az előbbiből leszármazó osztályok az adathalmazt reprezentálják. Rendelkeznek egy `__getitem__(self, index)` metódussal, amely leírja, hogy adott indexű adat elérése során mi történik, mint például eredeti tömb elérése, majd előfeldolgozó transzformációk alkalmazása.
+
+Az utóbbi feladata, hogy tanítás során megfelelően adagolja az adatokat. Kezeli az adatok batch-ekbe szervezését, illetve flag-ekkel állítható a viselkedése (pl.: `shuffle` flag-gel beállítható, hogy az eredeti adathalmaz elemeit megkeverje-e az adagolás előtt).
+### 8. Ha többször meghívja a `loss.backward()` függvényt az `optimizer.zero_grad()` meghívása nélkül, mi történik a modell paramétereinek `.grad` attribútumában tárolt gradiensekkel?
+A gradiensek akkumulálódnak, így a modell paramétereinek `.grad` attribútuma nem a jelenlegi hibát fogja helyesen reprezentálni. Azt az esetet leszámítva, amikor célunk, hogy a batch-ek között akkumulálódjanak a gradiensek, érdemes meghívni az `optimizer.zero_grad()` függvényt minden iteráció elején. Ezzel elkerülhető a gradiensek akkumulálódása.
+### 9. A PyTorch dokumentációja szerint melyik a javasolt módszer egy betanított modell mentésére a későbbi inferenciához való felhasználás céljából?
+A `.pth` file-okba való lementése a `model.state_dict()`-nek a `torch.save(model.state_dict(), output_path)` segítségével. Ezzel nem magát az objektumot, hanem csak az állapotát mentjük le.
+### 10. A PyTorch dokumentációja szerint a `torchvision.transforms.ToTensor()` transzformáció mit tesz egy bemeneti PIL képpel vagy NumPy tömbbel?
+Egyrészt tenzorrá transzformálja a bemeneti képet reprezentáló tömböt, vagy a NumPy tömböt. Másrészt a pixelértékeket automatikusan átskálázza a `[0,1]` intervallumra lebegőpontos számokként (`float32`).
+### 11. Melyik veszteségfüggvényt használják általában többosztályos osztályozási problémák esetén a PyTorch-ban, mivel az egyesíti az `nn.LogSoftmax` és az `nn.NLLLoss` funkcióit?
+A `torch.nn.CrossEntropyLoss()`-t.
