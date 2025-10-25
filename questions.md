@@ -426,3 +426,97 @@ A `.pth` file-okba való lementése a `model.state_dict()`-nek a `torch.save(mod
 Egyrészt tenzorrá transzformálja a bemeneti képet reprezentáló tömböt, vagy a NumPy tömböt. Másrészt a pixelértékeket automatikusan átskálázza a `[0,1]` intervallumra lebegőpontos számokként (`float32`).
 ### 11. Melyik veszteségfüggvényt használják általában többosztályos osztályozási problémák esetén a PyTorch-ban, mivel az egyesíti az `nn.LogSoftmax` és az `nn.NLLLoss` funkcióit?
 A `torch.nn.CrossEntropyLoss()`-t.
+
+# 7. Előadás
+## 7.1 Hiperparaméter optimalizáció
+### 1. Melyik a Grid Search (rácskeresés) egyik fő hátránya a Random Search-el (véletlen keresés) szemben, különösen sok hiperparaméter esetén?
+Míg a Grid Search a megadott keresési tér minden elemét megvizsgálja, addig a Random Search csak véletlenszerűen választott pontok esetén vizsgálja meg a modell teljesítményét. Így tehát a hiperparaméterek számának növekedésével a Grid Search költsége exponenciálisan nő, tehát sokkal költségesebb.
+### 2. Mi az a Grid Search, mikor használjuk? Mi az a random search, milyen heurisztikákat használunk?
+A Grid Search egy olyan technika, melynek segítésével egy adott modell esetén megtalálhatjuk az optimális hiperparaméter-kombinációt. A keresés a Grid Search esetén kimerítő, így leginkább kisebb méretű kereséséi tér esetén használatos.
+
+A Random Search ezen próbál segíteni, véletlenszerű mintavételezést alkalmazva képes nagyobb méretű keresési térben is megtalálni az optimális, vagy gyakrabban közel optimális hiperparamétereket. A módszerhez tartozó heurisztikus megközelítések közé tartozik például a Bayesian Optimization vagy a Hyperband, amelyek a véletlenszerű keresést irányítottabbá teszik.
+### 3. Keras Tuner-ben hogy állítasz be egy neuronszám és learning rate optimalizációt?
+A Keras Tuner-ben a neuronok számát és a tanulási rátát a `HyperParameters` objektummal adjuk meg.
+```python
+def build_model(hp):
+    model = keras.Sequential([
+        keras.layers.Dense(
+            units=hp.Int('units', min_value=32, max_value=256, step=32), # neuronszám keresése, 32-től 256-ig 32-es lépésszámmal
+            activation='relu'
+        ),
+        keras.layers.Dense(1, activation='sigmoid')
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(
+            hp.Float('learning_rate', 1e-4, 1e-2, sampling='log') # learning rate keresése 1e-4 és 1e-2 között logaritmikus mintavételezéssel
+        )
+        loss='binary_crossentropy',
+        metrics=['accuracy']
+    )
+    return model
+
+# Tuner meghívása
+# Random Search alkalmazása max 10-szer úgy, hogy a cél a legnagyobb pontosság elérése a validációs adathalmazon
+tuner = RandomSearch(build_model, objective='val_accuracy', max_trials=10)
+```
+### 4. Mi a Bayes-i optimalizálás alapelve a hiperparaméter-hangolás során?
+A Bayes-i optimalizálás alapelve, hogy a korábbi próbálkozások eredményei alapján valószínűségi modellt épít a célfüggvényről, majd ezt használja arra, hogy okosan, nem véletlenszerűen válassza ki a következő hiperparaméter-kombinációkat, így kevesebb próbálkozással találja meg az optimumot.
+### 5. A Tree-structured Parzen Estimators (TPE) algoritmus hogyan választja ki a következő jelölt hiperparaméter-készletet?
+A TPE algoritmus két valószínűségi modellt épít:
+- _l(x)_ a jól teljesítő hiperparaméterek eloszlását,
+- _g(x)_ a rosszul teljesítőkét.
+Ezután a következő jelölt hiperparaméter-készletet úgy választja ki, hogy maximalizálja az _l(x)/g(x)_ arányt, vagyis olyan pontokat próbál ki, amelyek nagy valószínűséggel tartoznak a jó megoldások közé, de ritkák a rossz megoldásokban.
+### 6. Miért ajánlott logaritmikus skálájú mintavételezést (`sampling="log"` vagy `log=True`) használni olyan hiperparaméterek esetén, mint a tanulási ráta (learning rate)?
+Az olyan hiperparaméterek esetén, mint a learning rate azért érdemes logaritmikusan mintavételezni, mert ezen hiperparaméterek értéke akár több skálán is átívelhet. Ilyen esetekben a logaritmikus mintavételezés egyenletesen tudja lefedni a lehetséges tartományt, így hatékonyabban található meg az optimális érték.
+### 7. A Ray Tune keretrendszerben a `tune.run` függvény `resources_per_trial` paramétere mit tesz lehetővé?
+A `resources_per_trial` paraméter segítségével beállítható, hogy a hiperparaméter-keresés során egyszerre mennyi erőforrást (CPU/GPU) használhat fel a keretrendszer a párhuzamos futtatásra. Így tehát olyan esetben, amikor egy számítógép/rendszer például két CPU-val rendelkezik, beállítható, hogy egyszerre kettő trial fusson párhuzamosan:
+```python
+tuner = tune.Tuner(
+    trainable,
+    param_space=param_space,
+    tune_config=tune.TuneConfig(num_samples=10),
+    resources_per_trial={"cpu": 2, "gpu": 0}
+)
+results = tuner.fit()
+```
+### 8. Mi a "trial" fogalom jelentősége hiperparaméter optimalizáció során?
+A "trial" fogalommal jelöljük ki a hiperparaméter optimalizáció során azt a folyamatot, melynek során a keresési tér egy pontja alapján betanítunk egy modellt, majd kiértékeljük azt.
+### 9. Milyen esetben hasznos feltételes hiperparamétereket (conditional hyperparameters) definiálni?
+Feltételes hiperparamétereket akkor érdemes definiálni, amikor egy hiperparaméter értéke csak bizonyos más hiperparaméterek beállításai mellett releváns.
+
+Például egy hálózatban a dropout arányt csak akkor kell megadni, ha az adott réteg létezik; vagy egy optimalizálóhoz tartozó momentum paraméter nem minden esetben értelmezett.
+
+Ez lehetővé teszi, hogy a keresési teret logikusan szűkítsük, és megakadályozzuk, hogy a tuner értelmetlen kombinációkat próbáljon ki, így hatékonyabb lesz az optimalizáció.
+### 10. Mi a Hyperband algoritmus (és az azt használó schedulerek, pl. `ASHAScheduler`) működésének alapja?
+A Hyperband algoritmus alapelve az, hogy gyorsan megszakítja a gyengén teljesítő trial-okat, és a rendelkezésre álló erőforrásokat az ígéretes próbálozásokra összpontosítja:
+
+- Kezdetben sok trialt indít kevés erőforrással (pl.: kevés epoch vagy kisebb mintavétel).
+- A rosszul teljesítők korán kiesnek, a jobban teljesítők folytatják a futást.
+- Az eljárás többször megismétlődik, így hatékonyan található meg a jó hiperparaméter kombináció kevesebb számítási költséggel.
+
+Az `ASHAScheduler` a Hyperband továbbfejlesztett változata, amely asszimmetrikusan, dinamikusan állítja le a gyenge trial-okat, még nagyobb hatékonyságot biztosítva nagy keresési terekben.
+### 11. Mi a validációs adathalmaz (validation set) elsődleges szerepe a hiperparaméter-hangolás során?
+Hasonlóan a tanításhoz egy előre beállított hiperparaméter kombináció esetén, a validációs adathalmaz szerepe itt is az, hogy az eredményként előálló modell generalizációs képessége minél jobb legyen. Azaz a cél azon hiperparaméter kombináció megtalálása, amely esetén a validációs adathalmazon mért metrika a legjobb.
+
+Megjegyzésként érdemes megemlíteni, hogy ez nem feltétlen azon hiperparaméter kombináció, mely esetén a modell teljesítménye a tanító adathalmazon a legjobb.
+### 12. Mi a veszélye a teszt adathamaz használatának a hiperparaméter optimalizáció során?
+A teszt adathalmaz használatával úgy állítjuk elő az optimális hiperparamétereket, hogy azok a teszt adathalmazhoz illeszkedjenek, avagy a teszt adathalmazon mért metrika az eredmény hiperparaméterek esetén legyen a legjobb.
+
+Ezzel gyakorlatilag implicit módon engedjük az algoritmusnak/modellnek, hogy a tesztadathalmazt felhasználja a tanuláshoz.
+
+Megjegyzésként érdemes megemlíteni, hogy ezért van külön validációs és teszt adathalmaz. Bár normál esetben a validációs adathalmaz alapján nem frissíti a súlyait a modell, de mivel ezt a tanítás során felhasználjuk a különböző metrikák mérésére, így implicit módon elkezd a modell "túlilleszkedni" a validációs adathalmazon. Ezzel pedig egy torzított képet kapunk a modell generalizációs képességét illetően - bár kevésbe, mintha csak a tanító adathalmazt használnák a metrikák mérésére.
+### 13. A TPE (Tree-structured Parzen Estimators) algoritmusban a Expected Improvement arányként van definiálva. Mit reprezentál a képlet?
+A TPE algoritmusban az Expected Improvement a "várható javulást" méri, azaz azt, hogy egy adott hiperparaméter-jelölt mennyire valószínű, hogy jobb teljesítményt fog nyújtani, mint a jelenlegi legjobb érték.
+
+A képlet lényege:
+
+$\int_{-\infty}^{y^*}(y^*-y)p(y \mid x)\,dy$
+- $y^* \rightarrow$ a jelenlegi legjobb teljesítmény (pl.: validációs metrika)
+- $p(y \mid x) \rightarrow$ a modell (pl.: Gauss-folyamat vagy TPE eloszlás) által becsült valószínűségi eloszlás az adott hiperparaméter $x$ mellett.
+
+Értelmezés:
+- Az EI magas értéke azt jelzi, hogy a próbálkozás nagy valószínűséggel javítja a jelenlegi legjobb eredményt.
+- A TPE ezt úgy számítja, hogy maximalizálja az _l(x)/g(x)_ arányt, ami gyakorlatilag az EI-t reprezentálja: olyan $x$-eket választ, amelyek valószínűleg jók a korábbi tapasztalatok alapján.
+### 14. Mit kell tudni a kategórikus és folytonos hiperparaméterek optimalizációjáról?
+A kategórikus hiperparaméterek esetén a keresési tér diszkrét, azaz adott n darab lehetséges érték, amelyet az algoritmus kipróbálhat. A folytonos hiperparaméterek esetén a keresési tér folytonos, így végtelen mennyiségű lehetséges értéket vehet fel a változó/hiperparaméter. Ilyen esetben szükséges az algoritmusnak mintavételeznie például lineárisan vagy logaritmikusan, hogy hatékonyan megtalálhassa az optimumot.
