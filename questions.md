@@ -645,11 +645,53 @@ A következő transzformációk elterjedtek:
 Bizonyos műveletek, mint például a színváltoztatás, random forgatás vagy tükrözés nem alkalmazható hétköznapi képeknél, vagy csak korlátozott mértékben (pl.: forgatás esetén csak -15 és 15 fok között). Ugyanakkor ez műholdas képeknél, vagy mikroszkopikus felvételeknél alkalmazható, hiszen például a biológiai struktúrák iránya vagy pozíciója változtatható.
 ### 16. Mi határozza meg, hogy egy transzformáció hatékony adatdúsítást valósít meg egy adott adaton?
 Az, hogy milyen mértékben javítja a modell generalizációs képességét - hiszen ha az adott transzformáció nem hatékony, akkor a modell túltanulását "segítheti".
-### 17. Milyen lépéseket javasol Karpathy egy neurális háló fejlesztésének "receptjében" (📄 A Recipe for Training Neural Networks by Andrej Karpathy)?
-A következő lépéseket javasolja:
-- 1.) Become one with the data: Adatok elemzése, megfigyelése
-- 2.) Set up the end-to-end training/evaluation skeleton + dumb baseline
-- 3.) Overfit: Tetszőleges modell túltanítása. Arra bizonyíték, hogy a modell tud tanulni.
-- 4.) Regularize
-- 5.) Tune
-- 6.) Squeeze out the juice
+
+# 10. Előadás
+## 10.1 RNN, figyelmi mechanizmus, Transformer bevezetés
+### 1. Mi a rekurrens neurális hálózatok (RNN) alapvető jellemzője, amely megkülönbözteti őket az előrecsatolt hálózatoktól?
+Az, hogy tartalmaznak olyan kapcsolatokat is, amely a szekvencia előző bemenetének feldolgozásával előálló _hidden state_-t visszacsatolja a háló bemenetére. Azaz a $input_{t+1}=x_{t+1} + h_t$, ahol $x_{t+1}$ a t+1. eleme a bemeneti szekvenciának, míg $h_t$ a t. időpillanatban feldolgozott szekvenciabeli elemhez tartozó _hidden state_. 
+### 2. Mi az egyik fő oka annak, hogy a standard RNN-ek küzdenek a hosszú távú függőségek megtanulásával?
+Az, hogy a hálók a _hidden state_-k segítségével "emlékeztek" a szekvencia előző elemeire. Ugyanakkor ennek egy _bottleneck-jét_ jelentette ez a _hidden state_, hiszen egyetlen állapotba/vektorba kellett, hogy belesűrítsenek minden információt a múltról. Ez pedig hosszú szekvenciák esetén azt eredményezte, hogy a szekvenciák elején lévő információt egyre inkább el kezdte "felejteni" a modell. Ennek hátterében matematikailag a _vanishing gradients_ jelensége áll egyébként.
+### 3. Mi az encoder-decoder modelleket működésének alapja?
+Az ilyen modelleket két külön komponensre lehet osztani:
+- _Encoder_: A feladat az _encoder_ résznek az, hogy a bemenetet feldolgozza, és egy belső reprezentáló térbe beágyazza. Ez a sok dimenziós tér az, ahol gyakorlatilag a modell tárolja a megtanult információit.
+- _Decoder_: A feladata a _decoder_ résznek, hogy a bemenetből származó rejtett reprezentáció alapján új kimenetet generáljon.
+
+A működés során tehát a modell alapvetően a bemenetből kinyer minden releváns információt, eközben beágyazza azt, majd visszatranszformálja a kinyert információk alapján a bemeneti vektort a bemeneti térbe, ezzel új jelentést adva neki - például: a bemeneti angol szó mely francia szónak felel meg.
+### 4. Mi a legalapvetőbb különbség a rekurrens neurális hálózatok (RNN) és a Transformer modellek szekvenciafeldolgozása között?
+Az RNN-ek a feldolgozás során a szekvenciának mindig pontosan egy elemét látják/dolgozzák fel. Ezzel szemben a Transformer modellek a feldolgozás során a bemeneti szekvencia minden elemét látják és ez alapján dolgozzák fel azt az _attention mechanism_ segítségével.
+### 5. Mi a "Teacher Forcing" technika lényege az RNN-ek tanítása során?
+A Teacher Forcing technika lényege, hogy az RNN (vagy seq2seq modell) tanítása során nem a modell saját előző kimenetét, hanem a valós (_ground truth_) előző célértéket adjuk bemenetként a következő időlépéshez.
+
+Ez felgyorsítja a tanulást és stabilabb konvergenciát biztosít, mivel a hibák nem torlódnak össze a szekvencia mentén.
+
+Ugyanakkor hátránya, hogy _inference_ közben a modellnek már a saját előző kimeneteire kell támaszkodnia, ami eltéréshez vezethet a tanítási körülményekhez képest - ezt _exposure bias_-nak hívják.
+### 6. Mi a felejtő kapu (forget gate) funkciója egy LSTM cellában?
+A _forget gate_ szerepe az, hogy gyakorlatilag kijelölje/elmondja a modell számára, hogy a memóriájában tárolt információk közül melyek azok, amelyek már nem relevánsak, tehát el lehet felejteni. Ezt egy _sigmoid_ aktivációval éri el, amivel a _cell state_ értékeit szűri 0 és 1 közötti skálán.
+### 7. A rekurrens neurális hálózatok (RNN) tanítása során alkalmazott Backpropagation Through Time (BPTT) módszer miért lehet számításigényes?
+A BPTT alkalmazása során már nem csak az RNN modell architektúráját, hanem az időbeli faktort is figyelembe kell venni. A gradiens számításakor a t. időpillanatban szükség van az összes t+1., t+2, ... időpillanat beli $h_t$ _hidden state_-re, amely miatt tehát a _hidden state_-ek tárolása szükséges. Ez pedig memóriaintenzív.
+
+Matematikailag a gradiensnek tagja lesz: $\frac{\delta \mathcal{L}}{\delta h_t}=\sum_{k=t}^{T}\frac{\delta \mathcal{L_k}}{\delta h_t}$
+### 8. Mi a bidirekcionális RNN-ek (BiRNN) elsődleges célja?
+Az, hogy biztosítsák azt, hogy az információ ne csak előre folyhasson (múlt -> jövő), hanem visszafele is (jövő->múlt). Ezt úgy érik el, hogy ezen modellek két külön RNN réteget használnak: egyet előre, egyet visszafele, és a kimeneteket összekapcsolják (_concatenate_), így minden időpillanatnál mindkét irány információi rendelkezésre állnak.
+### 9. Hány tanulható paramétere (súlyok és biasok) van egy LSTM rétegnek, ha a bemenete mérete 100 és a cella méret 200?
+Az összes tanulható paraméter a következő komponensekből áll:
+- Bemeneti súlyok $W$: $4*(input\_size*hidden\_size)=4*(100*200)=80000$
+- Rekurzív súlyok $U$: $4*(input\_size*hidden\_size)=4*(200*200)=160000$
+- Bias-ok $b$: $4*hidden\_size=4*200=800$
+Így tehát az összes tanulható paraméter: $80000+160000+800=240800$
+### 10. Miért van szükség pozicionális kódolásra (Positional Encoding) a Transformer modellekben, míg az RNN-ekben nincs?
+Azért, mert míg az RNN-ek az inputot sorrendben/szekvenciálisan dolgozzák fel - a t. időpillanatban a bemenet a t. időpillanathoz tartozó szekvenciaelem (illetve a t-1. időpillanat _hidden state_-je) - ezzel tehát közvetlenül megkapva az elemek pozíciójához tartozó információt, addig a Transformerek az input egészét látják. Azaz a Transformerek esetén alapból semmilyen információt nem kapnak a modellek az input szekvencia elemeinek pozíciójáról.
+### 11. A Transformer architektúrában mi a fő előnye a többfejű figyelmi mechanizmusnak (Multi-Head Attention) az egyfejű figyelemhez képest?
+A _Multi-Head Attention_ segítségével a Transformerek képesek azt elérni, hogy a beágyazó térben az egyesek _attention head_-ek az inputszekvencia különböző aspektusaira figyeljenek és azok reprezentációit ezen aspektusok alapján frissítsék az _attention mechanism_-t használva.
+
+Így tehát több fejjel gazdagabban tudják reprezentálni az inputszekvenciához tartozó tokeneket, hiszen egy fejjel csak egy dologra lennének képesek figyelni és csak ez alapján frissítenék a látenstér-beli reprezentációit a vektoroknak.
+### 12. Melyik típusú figyelmi mechanizmus biztosítja a Transformer dekóderében az autoregresszív tulajdonságot, azaz hogy az előrejelzés csak a korábbi tokeneken alapuljon?
+Az úgynevezett _masked_ vagy _casual attention_ segítségével, ahol adott token esetén a következő/"jövőbeli" tokenekhez tartozó _attention score_-ok értéket $-\infty$-re van állítva.
+### 13. Mi a fő különbség az önfigyelem (self-attention) és a kereszt-figyelem (cross-attention) között a Transformer modellben?
+A _self-attention_ célja, hogy adott token reprezentációját az őt a szekvenciában körülvevő tokenek reprezentációjával frissítse. A _cross-attention_ például az enkóder-dekóder típusú Transzformereknél használt, ahol a kimeneti/dekódolt szekvencia elemeinek értékét nem csak a kimeneti szekvencia elemei alapján (_self-attention_) frissítjük, hanem a bemeneti/enkódolt szekvencia alapján is.
+### 14. A Transformer modellben a figyelmi mechanizmus a Query (Q), Key (K) és Value (V) vektorokat használja. Mi a V (Value) vektor szerepe?
+A három vektor szerepe a következő:
+- Query ($Q$) vektor: Az _attention mechanism_ során megfelel egy kérdésnek. Ez az, amely segítségével az adott token "kiderítheti", hogy mely más tokenek relevánsak az ő reprezentációját tekintve.
+- Key ($K$) vektor: A válasz vektor. Ez az, amivel a többi vektor úgymond válaszolni tud a kérdésre. Ez a válasz gyakorlatilag az, hogy az adott token, akihez a Key vektor tartozik releváns-e a Query vektorhoz tartozó token reprezentációját tekintve, vagy sem. Matematikailag a Query és Key vektorok dimenziója megegyezik, így a hasonlóság a skaláris szorzatukkal "mérhető".
+- Value ($V$) vektor: Megadja, hogy abban az esetben, ha a Key vektorhoz tartozó token releváns a Query vektor reprezentációját tekintve, akkor milyen érték adódjon hozzá a Query vektor reprezentációjához.
