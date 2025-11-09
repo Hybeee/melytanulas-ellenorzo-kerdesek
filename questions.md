@@ -520,3 +520,136 @@ $\int_{-\infty}^{y^*}(y^*-y)p(y \mid x)\,dy$
 - A TPE ezt úgy számítja, hogy maximalizálja az _l(x)/g(x)_ arányt, ami gyakorlatilag az EI-t reprezentálja: olyan $x$-eket választ, amelyek valószínűleg jók a korábbi tapasztalatok alapján.
 ### 14. Mit kell tudni a kategórikus és folytonos hiperparaméterek optimalizációjáról?
 A kategórikus hiperparaméterek esetén a keresési tér diszkrét, azaz adott n darab lehetséges érték, amelyet az algoritmus kipróbálhat. A folytonos hiperparaméterek esetén a keresési tér folytonos, így végtelen mennyiségű lehetséges értéket vehet fel a változó/hiperparaméter. Ilyen esetben szükséges az algoritmusnak mintavételeznie például lineárisan vagy logaritmikusan, hogy hatékonyan megtalálhassa az optimumot.
+
+# 8. Előadás
+## 8.1 Gépi látás alapok, konvolúciós hálózatok
+### 1. Milyen alap feladatokkal foglalkozik a gépi látás?
+Képek vagy videók feldolgozásával klasszikus/algoritmikus módszerekkel, illetve mély neurális hálózat alapú módszerekkel.
+
+A feladatok közé tartozik például:
+- Osztályozás - a képen látható objektum mely osztályba tartozik
+- Objektumdetektálás - a képen látható objektum kijelölése bounding box-szal
+- Szemantikus szegmentáció - minden egyes pixel osztályozása; melyik pixel melyik osztályhoz tartozik
+### 2. Mit értünk „szemantikus szakadék” (semantic gap) alatt a számítógépes látás kontextusában?
+A gépek számára egy kép-/videofelvétel esetén nem adott az a kontextusbeli tudás, amely egy ember számára igen. Így tehát egyfajta szakadékot képez az, hogy a gépek a képek értelmezését csupán a pixelek értékei alapján kell, hogy elvégezzék.
+### 3. Milyen alap rétegekből épül fel egy konvolúciós neurális hálózat? Hogyan működnek ezek?
+A következő rétegek használtak a CNN-ek esetén:
+- Konvolúciós réteg: A hálózat legfontosabb blokkja, melynek segítségével a modell ki tudja nyerni a szükséges információt a bemeneti kép esetén. Ezen rétegek segítségével képes a model egyre komplexebb jellemzőket felismerni - ahogy ezen rétegek egyre mélyebben helyezkednek el a hálóban.
+- Pooling rétegek: A pooling rétegek segítségével képes a modell a _feature map_-ek térbeli dimenzióját csökkenteni (_spatial dimension_). A pooling réteg típusától függően képes eközben a legfontosabb jellemzőket (`MaxPool`), vagy a jellemzők átlagát (`AveragePool`) megtartani.
+- Normalizáló réteg: A hálón átmenő adatfolyam normalizálását végzi el. Nem CNN-specifikus
+- Flatten réteg: A kimeneti _feature map_-ek kilapítását végzi el. Előállítja az FC-réteg bemenetét
+- Fully Connected (FC) réteg: A konvolúciós rétegek által kinyert információkat összegzi.
+### 4. Mi a „paramétermegosztás” (parameter sharing) lényege egy konvolúciós rétegben?
+A _parameter sharing_-et a CNN-ek a kernelek segítségével érik el. Ennek lényege, hogy a háló architektúrájának/működésének köszönhetően képesek egy adott jellemzőt (pl.: él) annak helyzetétől függetlenül felismerni. Ezt a tulajdonságot _translational invariance_-nek hívjuk.
+### 5. Mi a pooling réteg elsődleges funkciója egy CNN architektúrában?
+A _spatial dimension_ csökkentése, miközben a kinyert információt pooling rétegtől függően megtartja/transzformálja.
+Két leggyakrabban használt pooling réteg:
+- MaxPool - A legmagasabb aktivációjú értéket tartja meg.
+- AveragePool - A kernel által kijelölt terület értékeinek átlagát tartja meg.
+### 6. Mi legfőbb gyakorlati haszna annak, hogy teljesen összekötött (Fully-Connected) rétegek helyett konvolúciós rétegeket használunk egy gépi látásos neurális hálózat felépítésekor?
+Egy Fully-Connected rétegeket alkalmazó hálózat esetén egy 512x512-es kép esetén pontosan 512*512 darab neuronra lenne szükség a bemeneti rétegben. Így tehát egy ilyen hálózat esetén túlságosan sok súlyra lenne szükség, ami többet között teljesítmény szempontjából sem előnyös.
+
+Ezen kívűl egy FC rétegeket alkalmazó hálózat képtelen lenne kihasználni egy bemeneti kép esetén a pixelek lokális kapcsolatait.
+
+Mindkét problémára megoldást adnak a CNN-ek a konvolúciós rétegek segítségével.
+### 7. Mit jelent egy neuron „receptív mezője” (receptive field) egy konvolúciós neurális hálózatban?
+Kijelöli a bemeneti kép/_feature map_ azon területét, amelyet a következő réteg az alkalmazott kernel segítségével "lát".
+### 8. Melyik tulajdonság írja le helyesen a konvolúciós rétegnek egy bemeneti kép eltolásával (transzlációjával) szembeni viselkedését?
+_Translational invariance_ tulajdonság.
+### 9. Mi a fő célja egy 1×1-es konvolúciónak egy CNN architektúrában?
+A cél elsősorban a csatornák közötti lineáris kombinációk létrehozása, illetve a dimenziócsökkentés/-növelés. Általában például _depth-wise convolution_-nél használják, ahol a cél a számítási performancia növelése úgy, hogy közben a háló performanciája nem csökken.
+### 10. Mi a „zero-padding” (nullákkal való kiegészítés) alkalmazásának egyik fő motivációja a konvolúciós rétegekben?
+Az, hogy a bemeneti és kimeneti _feature map_ dimenziói megegyezzenek. Ezt a "zero-padding" segítségével érhetjük el. Fontos, hogy ez a háló viselkedését/döntését nem befolyásolja pontosan annak köszönhetően, hogy a képet 0 értékekkel vettük körbe.
+### 11. Miben különbözik a „kihagyásos” („dilated” vagy „atrous”) konvolúció a standard konvolúciótól?
+A "dilated" konvolúció a kernel elemei között kihagyott helyeket alkalmaz, így nagyobb receptív mezőt ér el anélkül, hogy növelné a kernel méretét/a paraméterek számát. Ezzel szemben a standard konvolúció folyamatos, sűrű kernel-elemeket használ, és a receptív mező nagysága csak a kernel méretétől vagy a rétegek számától függ.
+### 12. Mi a Batch Normalization (BatchNorm) egyik kulcsfontosságú szerepe a mély neurális hálózatok, különösen a ResNetek tanításában?
+A hálón áthaladó adat (pontosabban batch) normalizálása, és ezzel a hibafelület kondícionáltságának javítása, amely a tanítást teszi stabilabbá. A hibafelület kondícionáltságának javítása különösen fontos mélyebb hálózatok esetén, mint például a ResNet-ek.
+### 13. Mi a szerepe a „global pooling” műveletnek egy konvolúciós hálózatban?
+Az, hogy egy több csatornából álló bemenet esetén (pl.: a háló mély rétegében) a csatornák értékeit aggregálja és ezzel a térbeli dimenziókat csökkentse. A gyakorlatban minden egyes csatorna esetén átlagolja a pixelek értékeit, ezzel csatornánként egy értéket előállítva.
+### 14. Hány tanulható paramétere (súlyok és biasok) van egy konvolúciós rétegnek, ha a bemenete 3 csatornás (RGB) kép, a szűrők mérete 3x3 és 100 szűrővel rendelkezik?
+$number\_of\_kernel * (kernel\_width * kernel\_height*input\_channels + 1(bias)) = 100 * (3 * 3 * 3 + 1)=2800$
+### 15. Konvolúciós hálók mélyebb rétegeiben hogyan alakul az alkalmazott szűrők száma és térbeli dimenziók (szélesség és magasság) nagysága?
+Az alkalmazott szűrök száma növekszik, míg a térbeli dimenziók csökkennek.
+### 16. Melyik konvolúciós architektúrákat alkalmazzák széles körben?
+A következő architektúrák elterjedtebbek:
+- ResNet
+- VGG
+- Inception
+- DenseNet
+- MobileNet
+### 17. Milyen előnyei vannak egy széles körben elterjedt konvolúciós architektúra alkalmazásának egy egyedileg összeállított hálóhoz képest?
+Általában ezen architektúrák tartalmaznak olyan további architektúrális kiegészítéseket, amelyek jelentősen javítják egy CNN modell képességeit (pl.: ResNet esetén _skip connection_-ök használata). Emelett ezen architektúrák általában előtanított súlyokkal is elérhetők, így sokkal jobb eredményt érhetünk el, ha esetleg a rendelkezésre álló adat mennyisége nem nagy.
+### 18. Mi a „skip” vagy más néven „residual connection” alapvető ötlete a ResNet architektúrákban?
+A ResNet architektúra úgynevezett _residual block_-okra van felosztva. A _skip/residual connection_ célja, hogy az adatot ne csak egy adott _residual block_ bemenetére adja, hanem annak kimenetéhez is adja hozzá. Ezzel a cél a _vanishing gradient_ jelenség kikerülése.
+### 19. Mi az objektum detekció (Object Detection) célja és milyen architektúrák elterjedte OD-ra?
+Az Object Detection célja, hogy egy bemeneti kép/video esetén bounding box-ok segítségével jelöljön ki tárgyakat (pl.: önvezető autó esetén más autók, gyalogosok, stb...). A következő architektúrák elterjedtebbek:
+- R-CNN
+- Fast R-CNN
+- Faster R-CNN,
+- SSD
+- YOLO
+### 19. Milyen típusú feladatra tervezték eredetileg az U-Net architektúrát, és mi a legjellegzetesebb szerkezeti eleme?
+(Orvosi képfeldolgozás esetén) szemantikus szegmentációra. Legjellegzetesebb szerkezeti eleme az architektúra "U"-szerű alakja, amely azt jelképezi, hogy a bemeneti képet eleinte _downsample_-öli, majd _upsample_-öli.
+### 20. Mi az ImageNet adatbázis és mi a jelentősége a gépi látásban?
+Az egyik legnagyobb terjedelmű képfeldolgozási adatbázis. Az adathalmazban képek, illetve a hozzájuk tartozó osztály található meg. Az osztálycímkék sokszínűek, így egy modellt ezen adathalmazon betanítva elérhető, hogy a megtanult súlyoknak/kerneleknek köszönhetően a képfeldolgozási feladatokra jellemző műveleteket/összefüggéseket megtanulja a háló. Emiatt egy ImageNet-en előtanított hálót finomhangolva egy másik, kisebb méretű adathalmazon egy sokkal jobb teljesítményű modellt kaphatunk, mintha a modellt a nulláról tanítottuk volna be a kisebb adathalmazon.
+
+# 9. Előadás
+## 9.1 Modern hálózatok gépi látásra, transfer learning és adat augmentációs technikák
+### 1. Mi a mélységileg szétválasztható konvolúció (depthwise separable convolution) alapvető működési elve a hagyományos konvolúcióhoz képest?
+A hagyományos konvolúciós művelet sebességét kb. 9x-esre gyorsítja azzal, hogy a műveletet két részre bontja; először minden bemeneti csatornát külön szűr, majd az eredményeket egy 1x1-es konvolúcióval kombinálja.
+### 2. Mi a batch normalizáció, és miért kulcsfontosságú a nagyon mély hálózatok tanításában?
+A mély hálózatok során számos probléma merülhet fel, amely a tanítás nehezítheti. Ilyen például a _vanishing gradient_ jelensége, vagy akár a hibafelület kondícionálatlansága. Ezekre ad megoldást a batch normalizáció, amely a hálón áthaladó batch-ek normalizálását végzi el.
+### 3. Milyen alapvető problémát oldottak meg a ResNet architektúrában bevezetett maradék kapcsolatok (residual connections vagy skip connections)?
+A _vanishing gradient_ problémáját azáltal, hogy az adatot nem csak az egyes _residual block_-ok elejére adták, hanem azok végéhez is.
+### 4. Hogyan dolgozza fel egy Vision Transformer (ViT) a képeket másképp, mint egy konvolúciós neurális háló (CNN)?
+A bemeneti képet eleinte tokenizálja, amely során például egy egyszerű konvolúciós réteg segítségével _feature map_-eket nyer ki, majd ezekből a _positional encoding_ műveletet követően előállítja a tokeneket. Később ezen tokenek lesznek a Transformer bemenetei, amely ezután a belső működését felhasználva (_attention mechanism_) például klasszifikálja a képet.
+### 5. Mik a Vision Transformer (ViT) előnyei és hátrányai a CNN-ekhez képest? Mikor van előnye a CNN-eknek a ViT-kkel szemben?
+A ViT az _attention_-nek köszönhetően képes a kép globális jellemzőit is figyelembe venni, amely képfeldolgozás esetén fontos lehet. Ezen kívül egy ViT hasonlóan az _attention mechanism_-nek köszönhetően képes megtanulni azt, hogy az elvégzendő feladatot tekintve a kép mely jellemzői relevánsak.
+
+Ugyanakkor a ViT-ek tanítása a nagy paraméterszámnak köszönhetően nagyon sok adatot igényelnek. Emellett mind a tanítás, mind akár a kiértékelés sokkal hardware-igényesebb, mint a CNN-ek esetén.
+
+Így tehát olyan esetben, ahol nem áll rendelkezésünkre elegendő adat, vagy elegendő hardware-es erőforrás, a CNN-ek alkalmazása javasolt.
+### 6. Mi az a transzfertanulás, és melyek a legfőbb előnyei?
+A transzfertanulás az a folyamat, amikor egy előtanított modellt finomhangolunk egy másik adathalmazon. Ez számos előnnyel jár, mint például:
+- Ha az előtanított modell megfelelő méretű és minőségű adathalmazon lett előtanítva, akkor ezt a modellt finomhangolva könnyebben, akár kevesebb adat esetén is jobb eredményeket érhetünk el
+- Az előtanított modell "tudása" felhasználható a specifikus adathalmaz esetén
+### 7. Mi a transzfertanulás (transfer learning) egyik legfőbb előnye, különösen korlátozott méretű adathalmazok esetén?
+A legfőbb előny korlátozott méretű adathalmazok esetén, hogy ilyenkor az előtanított modell "tudása" felhasználható a kisméretű adathalmaz esetén - természetesen akkor, ha az előtanítás megfelelő méretű és minőségű adathalmazon történt. Emellett természetesen ilyenkor az is előny, hogy lehetséges, hogy a rendelkezésre álló adathalmaz olyan kicsi, hogy azon nulláról tanítani az adott modellt nem is lenne lehetséges/eredményes.
+### 8. Magyarázd el a „befagyasztott” (frozen) és a „tanítható” (trainable) rétegek szerepét a transzfertanulás során.
+A befagyasztott súlyok az előtanított modell súlyainak azon halmazát jelentik, amelyet a transzfertanulás során nem tanítunk. Ezek gyakorlatilag azon súlyok, amelyek a modell átalános "tudását" tartalmazzák.
+
+A tanítható rétegbeli súlyok feladata, hogy a finomhangolás során megtanulják azon jellemzők kinyerését, amely a feladat elvégzését tekintve relevánsnak számítanak.
+### 9. Milyen előnyei és buktatói vannak az előtanított hálók használatának prompting, fix jellemzőkinyerő, vagy finomhangolásos megközelítések esetén? (túlillesztés, katasztrofális felejtés, túl kevés vagy hiányzó tanulási kapacitás a hálóban)
+- Prompting/fix jellemzőkinyerés
+    - Előny: Kevés paramétert kell tanítani, gyors.
+    - Hátrány: A háló nem adaptálódik teljesen az új feladathoz, lehet, hogy a túl kevés vagy a hiányzó tanulási kapacitás miatt nem éri el a kívánt teljesítményt.
+- Finomhangolás:
+    - Előny: A modell adaptálható a specifikus feladathoz, javítva a teljesítményt.
+    - Hátrány: Túlilleszkedés kockázata a kis adathalmazon, katasztrofális felejtés (_catastrphic forgetting_) a korábbi tudás elvesztése.
+### 10. Mi az aktív tanulás (Deep Active Learning, DeepAL), és mi az elsődleges célja?
+Az aktív tanulás az a mélytanulási forma, melynek során egy hálót először egy kis adathalmazon tanítunk elő, majd ezt követően a háló lehetőséget kap arra, hogy egy címkézetlen adathalmazból kiválassza azon adatpontokat, amelyeket úgy gondol, hogy azok a legjobban segítik tanulását. Ez egyben az előnye is; lehetőve teszi, hogy a háló kiválassza a tanítását tekintve legjobb/leghasznosabb adatpontokat.
+### 11. Az aktív tanulás során a bizonytalanságon alapuló (uncertainty-based) lekérdezési stratégia hajlamos lehet hasonló mintákat kiválasztani. Milyen típusú stratégia segít ezt ellensúlyozni azáltal, hogy a kiválasztott köteg (batch) mintái az adatteret jobban lefedjék?
+A _diversity-based_, azaz diverzitás alapú stratégia, amely a batch mintáinak a változatosságára törekszik, így az adatteret jobban lefedi és csökkenti a hasonló minták ismétlődését.
+### 12. Mi az adatbővítés (data augmentation), és miért fontos a gépi tanulásban?
+A _data augmentation_ az a folyamat, melynek során a meglévő adatokat felhasználva új adatokat gyártunk. Ez egyrészt növeli a rendelkezésre álló adathalmaz méretét, másrészt a modell generalizációs képességét is növeli.
+### 13. Bevett gyakorlatokat követve, milyen transzformációkat/adatdúsítás (data augmentations) kell alkalmazni a validációs adatokra?
+A tanítás során a validációs adatokra nem szokás alkalmazni adatbővítési lépéseket. Ugyanakkor transzformációs lépéseket szokás, ez a normalizációt, illetve az átméretezést jelenti annak érdekében, hogy a modell teljesítményét validációs adathalmazon is mérni tudjuk.
+### 14. Milyen kép-transzformációk elterjedtek gépi látásban?
+A következő transzformációk elterjedtek:
+- Random tükrözés
+- Random forgatás
+- ColorJitter: Kép pixelintenzitását változtatja
+- Cropping: A bemeneti kép bizonyos részeinek kivágása
+- Gaussian noise: A bemeneti kép zajosabbá tétele
+### 15. Mely kép-transzformációk azok, melyek egyszerű "hétköznapi" fotókra nem, műköldképekre vagy éppen mikroszkóp felvételekre viszont általában alkalmazhatók?
+Bizonyos műveletek, mint például a színváltoztatás, random forgatás vagy tükrözés nem alkalmazható hétköznapi képeknél, vagy csak korlátozott mértékben (pl.: forgatás esetén csak -15 és 15 fok között). Ugyanakkor ez műholdas képeknél, vagy mikroszkopikus felvételeknél alkalmazható, hiszen például a biológiai struktúrák iránya vagy pozíciója változtatható.
+### 16. Mi határozza meg, hogy egy transzformáció hatékony adatdúsítást valósít meg egy adott adaton?
+Az, hogy milyen mértékben javítja a modell generalizációs képességét - hiszen ha az adott transzformáció nem hatékony, akkor a modell túltanulását "segítheti".
+### 17. Milyen lépéseket javasol Karpathy egy neurális háló fejlesztésének "receptjében" (📄 A Recipe for Training Neural Networks by Andrej Karpathy)?
+A következő lépéseket javasolja:
+- 1.) Become one with the data: Adatok elemzése, megfigyelése
+- 2.) Set up the end-to-end training/evaluation skeleton + dumb baseline
+- 3.) Overfit: Tetszőleges modell túltanítása. Arra bizonyíték, hogy a modell tud tanulni.
+- 4.) Regularize
+- 5.) Tune
+- 6.) Squeeze out the juice
