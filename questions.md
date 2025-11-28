@@ -695,3 +695,110 @@ A három vektor szerepe a következő:
 - Query ($Q$) vektor: Az _attention mechanism_ során megfelel egy kérdésnek. Ez az, amely segítségével az adott token "kiderítheti", hogy mely más tokenek relevánsak az ő reprezentációját tekintve.
 - Key ($K$) vektor: A válasz vektor. Ez az, amivel a többi vektor úgymond válaszolni tud a kérdésre. Ez a válasz gyakorlatilag az, hogy az adott token, akihez a Key vektor tartozik releváns-e a Query vektorhoz tartozó token reprezentációját tekintve, vagy sem. Matematikailag a Query és Key vektorok dimenziója megegyezik, így a hasonlóság a skaláris szorzatukkal "mérhető".
 - Value ($V$) vektor: Megadja, hogy abban az esetben, ha a Key vektorhoz tartozó token releváns a Query vektor reprezentációját tekintve, akkor milyen érték adódjon hozzá a Query vektor reprezentációjához.
+
+# 11. Előadás
+## 11.1 Transformerek és nagy nyelvi modellek
+### 1. Melyik LLM-architektúra típus a legalkalmasabb olyan feladatokra, mint a szövegosztályozás, névelem-felismerés vagy a hangulatelemzés, ahol a teljes bemeneti kontextus megértése a cél (a bidirectional kontextus megértési képessége alapján)?
+A szövegértési feladatokhoz, mint amik fent fel vannak sorolva, az enkóder-alapú, *bidirectional* Transformer (pl.: BERT) a legalkalmasabb.
+
+Ennek egyébként oka, hogy az ilyen típusú modellek esetén az encoder egységek az ún. *bidirectional attention*-t használják, amely lehetővé teszi, hogy az enkóder a bemeneti szekvencia összes tokenjét egyszerre, kölcsönösen figyelembe vegye.
+### 2. Mi a „finomhangolás” (fine-tuning) elsődleges célja egy előtanított nyelvi modell esetében?
+*Fine-tuning* során egy előre betanított nyelvi modellt a saját adathalmazunkon tovább tanítunk/finomhangolunk. Ezzel azt érjük el, hogy a modell alkalmazkodjon a konkrét feladathoz vagy doménhez, és így jobb teljesítményt nyújtson.
+### 3. Mi történik a BERT modell előtanításához használt „maszkolt nyelvi modellezés” (masked language modeling) során?
+A(z elő)tanítás során az egyes tanító adatpontokat egy-egy mondat/mondatpár jelenti. A *masked language modeling* során ezen mondatok esetén a tokenek egy részét maszkoljuk és arra kényszerítjük a modellt, hogy a kontextust ismerve prediktálja meg, hogy a maszkolt tokenek helyén milyen tokenek állhatnak.
+
+Ezzel gyakorlatilag a modell meg tudja tanulni, hogy az egyes mondatokban a szavak hogyan kapcsolódnak egymáshoz a mondat struktúráját/jelentését illetően.
+### 4. Hogyan érik el a nagy nyelvi modellek (LLM-ek) a szöveggenerálási képességüket statisztikai értelemben?
+A válasz generálása során az LLM-ek az addigi tokenek alapján generálják a következő szóba jöhető token valószínűségi eloszlását. A modell ezután a valószínűségek alapján generálhatja a következő tokeneket:
+- legvalószínűbb token (*greedy*)
+- egyéb stratégiák, például mintavételezés/hőmérséklet-paraméter, amelyekkel alacsonyabb valószínűségű tokeneket is választhat.
+### 5. Az LLM-ek egyik ismert korlátja a „hallucináció”. Mit jelent ez a fogalom?
+A hallucináció fogalma azt a jelenséget takarja, amikor egy LLM magabiztosan generál olyan választ, amely hamis, pontatlan vagy a valósággal ellentétes, annak ellenére, hogy a modell a válaszát hihetőnek és meggyőzőnek tünteti fel.
+### 6. Mi a tokenizálás szerepe a természetes nyelvi feldolgozásban?
+A tokenizálás szerepe az, hogy a bemeneti szekvenciát a modell számára értelmezhető egységekre (tokenekre) alakítsa át. Nyelvi feldolgozás esetén egy-egy token megfelelhet egy-eyg szónak, szóelemnek vagy akár betűnek is. Az előfeldolgozás során a tokeneket előbb numerikus alakban reprezentálják (pl.: egy szótár segítségével), majd ezen tokenek kerülnek a modell bemenetére.
+### 7. A Transformer-alapú nyelvi modellezés során miért van szükség a szövegek egységes hosszúságúra alakítására (padding/truncation)?
+A *padding*/*truncation* művelete azért szükséges, mert a tömbök/*tensor*-ok a számítási hatékonyság és a párhuzamos feldolgozás miatt fix kell, hogy legyen a GPU/TPU számítások során. Ez teszi lehetővé, hogy több szekvenciát egyszerre (*batch*-ben) dolgozzunk fel a modellben.
+### 8. Melyik technika csökkenti egy nagy nyelvi modell méretét és erőforrásigényét, miközben igyekszik megőrizni a tudását, de általában némi teljesítménycsökkenéssel jár?
+- Desztilláció: Egy nagy "tanár" modell tudását adják át egy kisebb "diák" modellnek.
+- Kvantálás: a modell súlyainak és/vagy aktivációinak precizitás-csökkentését végezzük el. Azaz pl. `float32` helyett `int8`-ba kvantáljuk át a súlyokat.
+### 9. A modell desztillálás során mi a „tanító” (teacher) és a „diák” (student) modellek közötti alapvető különbség?
+A "tanító" modell a nagyobb modell, mely pontosabb tudással rendelkezik, de lassabb. A "diák" modell ezzel szemben kisebb, tanítás során látja, hogy a "tanár" modell hogyan gondolkodik (pl.: adott bemenet esetén mi a kimeneti eloszlása) és ezt a gondolkodásmódot tanulja meg - azaz a kimeneti valószínűségi eloszlást próbálja meg replikálni.
+### 10. Mi a query (Q) és key (K) vektorok skaláris szorzatának elsődleges szerepe a „Scaled Dot-Product Attention” mechanizmusban?
+A *query* vektor egyfajta lekérdezésként szolgál, adott token ezen vektor segítségével próbálja meg megkeresni az összes olyan tokent, melynek jelentése az ő jelentését tekintve releváns. 
+
+A *key* vektor a válaszvektor; ez a token "azonosítója" a relevancia szempontjából, gyakorlatilag a token válasza a lekérdezésre.
+
+Ha a *query* és *key* vektorok skaláris szorzatának adja meg a relevancia mértékét a két token között.
+## 11.2 Prompt engineering kérdések
+### 1. Mi jellemzi a „kevés példán alapuló tanítást” (few-shot prompting)?
+Ez egy olyan módszer, melynek során az LLM-nek adott query-hez hozzáadunk pár példát, hogy a modell jobban megértse a feladatot, és így a válasza pontosabb legyen.
+### 2. Mi Retrieval-Augmented Generation (RAG) és a finomhangolás (fine-tuning) közötti alapvető különbség?
+RAG esetén a modell egy tudásbázist tud segítségül hívni a válaszának a pontosabb generálásához. Ennek során a modell egy külső hívást intéz a tudásbázisba, majd a visszakapott információt felhasználva hozza létre a válaszát. A modell súlyai RAG esetén nem változnak.
+
+Ezzel szemben *fine-tuning* esetén ezt a tudást explicit beépítjük a modellbe a súlyainak a változtatásával.
+
+# 13. Előadás
+## 13.1 Gráf neurális hálózatok
+### 1. Milyen mátrixot használunk egy gráf konnektivitásának reprezentálására GNN-ek esetén?
+A gráf konnektivitását ú.n. szomszédsági mátrix (*adjacency matrix*) segítségével reprezentáljuk. Ha M a szomszédsági mátrix, és i jelöli a sor indexét, j pedig az oszlop indexét, akkor:
+$$
+M[i, j] = \begin{cases}
+1, & \text{ha $i$ és $j$ szomszédok} \\
+0, & \text{egyébként}
+\end{cases}
+$$
+### 2. Milyen típusú predikciós feladatok képzelhetők el a gráf alapú tanulás területén?
+- Csomóponttal kapcsolatos predikció, pl.: fraud-detection
+- Éllel kapcsolatos predikció, pl.: létezik-e kapcsolat két csomópont között
+- A gráf egészére vonatkozó predikció, pl.: gyógyszerkutatás
+### 3. Mit jelent a message passing (üzenetküldési) GNN-ekben, milyen számítások történnek a message passing során?
+A *message passing* a GNN-ek alapmechanizmusa, melynek során minden csomópont a szomszédaitól üzenetet "gyűjt", majd ezekből frissíti a saját reprezentációját.
+
+Ez két fázisban történik:
+1. Message aggregation
+
+Minden csomópont összegyűjti a szomszédai reprezentációját valamilyen aggregáló függvény segítségével (pl.: min, max, mean)
+
+Matematikailag: $m^{k}_v = AGGREGATE^{k}({h^{k-1}_u : u \in N(v)})$
+
+2. Node representation update
+
+Adott csomópont a saját előző állapotával kombinálja az aggregált üzenetet, gyakran neurális hálóval (MLP) és nemlinearitással
+
+Matematikailag: $h^{k}_v = UPDATE^{k}(h^{k-1}_v, m^{k}_v)$
+### 4. Mi az over-smoothing probléma, miért jelentkezik sokrétegű, mély GNN-ek esetén?
+Az *ovver-smoothing* probléma azt jelenti, hogy egy mély GNN-ben a csomópontok reprezentációi túlságosan hasonlóvá válnak, amikor sok *message passing* rétegen keresztül aggregálódnak a szomszédok információi.
+
+Ennek oka, hogy minden rétegben a csomópont a szomszédjai embedding-jeit aggregálja, és ha túl sok réteg van, akkor az információk "elmosódnak", a csomópontok embedding-jei elveszítik a diszkrimináló képességüket.
+
+Tünet: a *node-level* predikciók pontossága csökken, mert a csomópontok reprezentációi közel azonosak lesznek.
+### 5. Miért kulcsfontosságú tulajdonság a permutációs invariancia a GNN-ek számára?
+A permutációs invariancia azt jelenti, hogy a csomópontok sorrendje nem befolyásolja a GNN kimenetét. Ez kulcsfontosságú, mert a gráf csomópontjaihoz nincs természetes sorrend, a szomszédsági mátrix vagy csomópontlista bármilyen permutációban beadható a modellnek.
+
+Ezt a viselkedést egyébként az aggregáló függvények permutációs invarianciája biztosítja.
+### 6. Miben tér el a szomszédság fogalma egy GNN és egy CNN esetében?
+- GNN: a szomszédság a gráf élei által definiált kapcsolat. Minden csomópont szomszédai azon csomópontok, amelyekkel közvetlen él köti össze. A szomszédság rugalmas, a gráf bármilyen topológiáját követheti, nincs fix szerkezet.
+- CNN: a szomszédság a rácsszerkezet/*pixel grid* szerint van definiálva, pl.: egy 3x3-as kernel esetén egy pixel szomszédja az őt körülvevő 8 pixel. A szomszédság fix, lokális és szabályos.
+### 7. Mi a Gráf Figyelmi Hálózatok (Graph Attention Networks, GATs)?
+Olyan GNN, amely az üzenetek aggregálásának lépésében használja az *attention* mechanizmust.
+
+Az üzenet aggregálása során adott csúcs esetén minden szomszédjához hozzá van rendelve egy súly, amely az adott szomszéd relevanciáját reprezentálja. Ezen súlyokat a háló tanulja, és lehetővé teszi, hogy adott csúcs adaptívan tudjon figyelni a fontosabb szomszédaira.
+### 8. Hogyan reprezentálja a PyTorch Geometric könyvtár a gráfokat a `Data` objektumban?
+A `Data` objektum a következő attribútumokkal reprezentálja a gráfokat:
+- `x`: csomópontok jellemzői (*feature matrix*, `shape = [num_nodes, num_features]`)
+- `edge_index`: élkapcsolatok COO formátumban (`shape = [2, num_edges]`), ahol az első sor a forráscsomópontokat, a második sor a célcsomópontokat tartalmazza.
+- Opcionálisan: `edge_attr`: éljellemzők, `y` -> címkék (*node-*, *edge-* vagy *graph-level*), stb...
+### 9. Hogyan hozza létre a PyTorch Geometric `DataLoader` a több gráfból álló mini-batchet?
+A `DataLoader` úgy hozza létre a *mini-batch*-et, hogy összegűzi a gráfokat egyetlen "*batched*" gráffá:
+- A csomópontokat (`x`) és élindexeket (`edge_index`) konkatenálja.
+- Az `edge_index`-eket automatikusan eltolja a csomópontok indexei szerint úgy, hogy a külön gráfok ne ütközzenek.
+- Hozzáad egy `batch` vektort, amely minden csomóponthoz jelzi, hogy melyik eredeti gráfhoz tartozik.
+- Így a GNN-ek képesek párhuzamosan feldolgozni több gráfot egy *mini-batch*-ben.
+### 10. Milyen valós alkalmazásokban jellemző a GNN-ek használata?
+Olyan alkalmazások/feladatok esetén, ahol a bemeneti adatstruktúra gráffal jellemezhető, és cél a rejtett kapcsolatok, struktúrák modellezése.
+
+Ilyen feladat például:
+- Közösségi hálók: ismerősök vagy kapcsolatok ajánlása, közösségfelismerés.
+- Pénzügyi szektor: csalásfelderítés, tranzakciók közötti kapcsolatok elemzése.
+- Biológia/gyógyszerkutatás: molekulák aktivitásának vagy tulajdonságának előrejelzése.
+- Tudományos hálók: cikkek, szerzők közötti kapcsolatok elemzése (pl.: citációs hálók).
