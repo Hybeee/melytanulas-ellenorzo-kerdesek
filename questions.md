@@ -802,3 +802,48 @@ Ilyen feladat például:
 - Pénzügyi szektor: csalásfelderítés, tranzakciók közötti kapcsolatok elemzése.
 - Biológia/gyógyszerkutatás: molekulák aktivitásának vagy tulajdonságának előrejelzése.
 - Tudományos hálók: cikkek, szerzők közötti kapcsolatok elemzése (pl.: citációs hálók).
+
+# 14. Előadás
+## 14.1 Gráf Neurális Hálózatok 2
+### 1. Melyek a gráf transformerek előnyei a hagyományos GNN-ekhez képest?
+A gráf transformerek a hagyományos GNN-ekkel szemben elsősorban a self-attention mechanizmus használatával kínálnak előnyöket:
+- Képesek a hosszú távú függőségeket is kezelni, amellyel csökkentik a kockázatát a hagyományos GNN-ekre jellemző oversmoothing-nak
+- Képesek rugalmasan kezelni a szomszédokat - pl.: releváns szomszédok nagyobb súlyt kapnak
+- Az attention mechanizmus segítségével képesek diszkriminatívabb reprezentációk megtanulására
+- Mivel képesek a globális információk kezelésére is, így gyakran sekélyebb architektúrával is képesek jó teljesítményt elérni.
+### 2. Miben különbözik a pozícionális kódolás gráf transformerekben és a szövegfeldolgozásra használt transformerekben?
+A szövegfeldolgozásra használt transformerekben a pozícionális kódolás célj a szekvenciában elfoglalt sorrend reprezentálása, hiszen a tokenek lineáris, rendezett struktúrát alkotnak.
+
+Ezzel szemben a gráf transformerek esetén nincs természetes sorrend, ezért a pozícionális kódolás a gráf struktúráját kódolja, mint például:
+- csomópontok közötti távolságok
+- gráf spektrális tulajdonságai (pl.: Laplace-sajátvektorok)
+- egyéb topológiai jellemzők
+### 3. Mi a multi-head attention használatának fő előnye a single-head attention-el szemben transformerek esetén?
+A multi-head attention használatának fő előnye az, hogy így a transformer/háló képes különböző aspektusaira figyelni a bemenetnek. Az egyes attention head-ek a beágyazó tér különböző szeleteiben dolgoznak, ahol ezáltal különböző típusú relációkat, illetve mintázatokat képesek megtanulni. Ezáltal pedig a modell képes gazdagabban, illetve stabilabban reprezentálni a bemenetet.
+### 4. Milyen problámakört hivatott megoldani a Relációs Mélytanulás (RDL)?
+A Relációs Mélytanulás olyan problémakörre lett kifejlesztve, ahol nemcsak az egyedi entitások, hanem azok közötti kapcsolatok is fontosak. A cél, hogy a modell ne csak az egyes entitások attribútumai alapján hozzon döntést, hanem az azok közötti kapscolatokat is vegye figyelembe.
+
+Jellemző felhasználási területek:
+- Gráfok, hálózatok
+- Tudásgráfok
+- Komplex struktúrák
+### 5. Hogyan alakítják át a relációs adatbázisokat gráfokká a Relációs Mélytanulás (RDL) megközelítésben?
+Az átalakítás a következő lépésekből áll:
+- Entitások -> csomópontok
+- Relációk -> élek
+- Attribútumok -> csomópont- vagy éljellemzők
+- Szükség esetén további normalizáció/aggregáció - ez olyan esetekben fordul elő, ahol az adatbázis összetettebb. Ilyenkor normalizálással/aggregálással tudjuk hatékonyabbá tenni a tanulást.
+### 6. Hogyan azonosítják a különböző csúcs- és éltípusokat egy PyG `HeteroData` objektumban?
+A PyG `HeteroData` objektumban a csúcs- és éltípusokat névvel (string) azonosítjuk:
+- Csomópontok: `data['node_type']` -> minden típushoz külön csomóponttábla
+- Élek: `data[('src_type', 'rel_type', 'dst_type')]` -> a háromtagú tuple a forráscsúcs-típus, éltípus, célcsúcs-típus
+### 7. Mi a `torch_geometric.nn.to_hetero()` metódus szerepe a PyG könyvtárban?
+A `torch_geometric.nn.to_hetero()` metódus a sima (homogén) GNN-t alakítja át heterogén gráfokra alkalmas modellé. Automatikusan létrehozza az egyedi súlyokat minden csúcs- és éltípushoz, így a háló képes különböző típusú csomópontok és élek kezelésére.
+### 8. Miért fordul elő az over-squashing jelenség GNN-ekben?
+Az over-squashing jelenség a GNN-ekben abból adódik, hogy a szomszédos csomópontok üzenetei egy fix méretű vektorba sűrítik, így a távoli csomópontokból származó információk torzulhatnak vagy elveszhetnek.
+
+Minél több rétegen keresztül kell az információt továbbítani, és minél nagyobb a csomópontok közötti távolság/kapcsolatok száma, annál erőteljesebb ez a probléma.
+### 9. Miért fordul elő az over-smoothing jelensége GNN-ekben?
+Az over-smoothing jelenség a hagyományos GNN-ekben abból adódik, hogy a rétegek egymás után történő szomszéd-aggregációja miatt a csomópontok reprezentációi egyre hasonlóbbá válnak.
+
+Minél több réteg van, annál inkább elvesznek az egyedi információk, és a csomópontok beágyazásai összemosódnak. Ennek következménye, hogy a GNN nehezebben különbözteti meg a csomópontokat, ami rontja a predikciós teljesítményt.
