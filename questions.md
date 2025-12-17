@@ -186,6 +186,7 @@ Matematikai szempontból a súlyhoz tartozó hiba gradiensét számoljuk ki: `dC
 **Regresszió**
 - `RMSE - Root Mean Squared Error`
 - `MAE - Mean Absolute Error`
+
 **Osztályozás**
 - `Binary Crossentropy`: Bináris klasszifikáció, Többcímkés osztályozás
 - `Categorical Crossentropy`: Többosztályos klasszifikáció
