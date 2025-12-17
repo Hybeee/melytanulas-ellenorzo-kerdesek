@@ -132,9 +132,11 @@ Az osztályozási feladat célja, hogy a bemeneti jellemzők alapján a bemeneti
 **Bináris klasszifikáció:**
 - **Veszteségfüggvény:** `Binary Crossentropy`
 - **Aktivációs függvény:** `Sigmoid`
+
 **Többosztályos klasszifikáció:**
 - **Veszteségfüggvény:** `Categorical Crossentropy`
 - **Aktivációs függvény:** `Softmax`
+
 **Többcímkés osztályozás:**
 - **Veszteségfüggvény:** `Binary Crossentropy` - minden címkére külön számolva
 - **Aktivációs függvény:** `Sigmoid` - minden címkéhez külön
