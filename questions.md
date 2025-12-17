@@ -515,9 +515,9 @@ A TPE algoritmusban az Expected Improvement a "várható javulást" méri, azaz 
 
 A képlet lényege:
 
-$\int_{-\infty}^{y^*}(y^*-y)p(y \mid x)\,dy$
+$\int_{-\infty}^{y^{best}}(y^{best}-y)p(y \mid x)\,dy$
 
-- $y^* \rightarrow$ a jelenlegi legjobb teljesítmény (pl.: validációs metrika)
+- $y^{best} \rightarrow$ a jelenlegi legjobb teljesítmény (pl.: validációs metrika)
 - $p(y \mid x) \rightarrow$ a modell (pl.: Gauss-folyamat vagy TPE eloszlás) által becsült valószínűségi eloszlás az adott hiperparaméter $x$ mellett.
 
 Értelmezés:
