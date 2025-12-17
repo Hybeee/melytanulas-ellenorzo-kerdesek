@@ -509,7 +509,7 @@ A teszt adathalmaz használatával úgy állítjuk elő az optimális hiperparam
 
 Ezzel gyakorlatilag implicit módon engedjük az algoritmusnak/modellnek, hogy a tesztadathalmazt felhasználja a tanuláshoz.
 
-Megjegyzésként érdemes megemlíteni, hogy ezért van külön validációs és teszt adathalmaz. Bár normál esetben a validációs adathalmaz alapján nem frissíti a súlyait a modell, de mivel ezt a tanítás során felhasználjuk a különböző metrikák mérésére, így implicit módon elkezd a modell "túlilleszkedni" a validációs adathalmazon. Ezzel pedig egy torzított képet kapunk a modell generalizációs képességét illetően - bár kevésbe, mintha csak a tanító adathalmazt használnák a metrikák mérésére.
+Megjegyzésként érdemes megemlíteni, hogy ezért van külön validációs és teszt adathalmaz. Bár normál esetben a validációs adathalmaz alapján nem frissíti a súlyait a modell, de mivel ezt a tanítás során felhasználjuk a különböző metrikák mérésére, így implicit módon elkezd a modell "túlilleszkedni" a validációs adathalmazon. Ezzel pedig egy torzított képet kapunk a modell generalizációs képességét illetően - bár kevésbe, mintha csak a tanító adathalmazt használnánk a metrikák mérésére.
 ### 13. A TPE (Tree-structured Parzen Estimators) algoritmusban a Expected Improvement arányként van definiálva. Mit reprezentál a képlet?
 A TPE algoritmusban az Expected Improvement a "várható javulást" méri, azaz azt, hogy egy adott hiperparaméter-jelölt mennyire valószínű, hogy jobb teljesítményt fog nyújtani, mint a jelenlegi legjobb érték.
 
