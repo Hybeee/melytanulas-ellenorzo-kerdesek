@@ -469,6 +469,7 @@ A Bayes-i optimalizálás alapelve, hogy a korábbi próbálkozások eredményei
 A TPE algoritmus két valószínűségi modellt épít:
 - _l(x)_ a jól teljesítő hiperparaméterek eloszlását,
 - _g(x)_ a rosszul teljesítőkét.
+
 Ezután a következő jelölt hiperparaméter-készletet úgy választja ki, hogy maximalizálja az _l(x)/g(x)_ arányt, vagyis olyan pontokat próbál ki, amelyek nagy valószínűséggel tartoznak a jó megoldások közé, de ritkák a rossz megoldásokban.
 ### 6. Miért ajánlott logaritmikus skálájú mintavételezést (`sampling="log"` vagy `log=True`) használni olyan hiperparaméterek esetén, mint a tanulási ráta (learning rate)?
 Az olyan hiperparaméterek esetén, mint a learning rate azért érdemes logaritmikusan mintavételezni, mert ezen hiperparaméterek értéke akár több skálán is átívelhet. Ilyen esetekben a logaritmikus mintavételezés egyenletesen tudja lefedni a lehetséges tartományt, így hatékonyabban található meg az optimális érték.
