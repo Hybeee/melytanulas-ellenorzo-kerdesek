@@ -682,7 +682,7 @@ Az, hogy biztosítsák azt, hogy az információ ne csak előre folyhasson (múl
 ### 9. Hány tanulható paramétere (súlyok és biasok) van egy LSTM rétegnek, ha a bemenete mérete 100 és a cella méret 200?
 Az összes tanulható paraméter a következő komponensekből áll:
 - Bemeneti súlyok $W$: $4*(input\_size*hidden\_size)=4*(100*200)=80000$
-- Rekurzív súlyok $U$: $4*(input\_size*hidden\_size)=4*(200*200)=160000$
+- Rekurzív súlyok $U$: $4*(hidden\_size*hidden\_size)=4*(200*200)=160000$
 - Bias-ok $b$: $4*hidden\_size=4*200=800$
 Így tehát az összes tanulható paraméter: $80000+160000+800=240800$
 ### 10. Miért van szükség pozicionális kódolásra (Positional Encoding) a Transformer modellekben, míg az RNN-ekben nincs?
