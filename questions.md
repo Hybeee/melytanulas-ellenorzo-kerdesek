@@ -650,6 +650,14 @@ A következő transzformációk elterjedtek:
 Bizonyos műveletek, mint például a színváltoztatás, random forgatás vagy tükrözés nem alkalmazható hétköznapi képeknél, vagy csak korlátozott mértékben (pl.: forgatás esetén csak -15 és 15 fok között). Ugyanakkor ez műholdas képeknél, vagy mikroszkopikus felvételeknél alkalmazható, hiszen például a biológiai struktúrák iránya vagy pozíciója változtatható.
 ### 16. Mi határozza meg, hogy egy transzformáció hatékony adatdúsítást valósít meg egy adott adaton?
 Az, hogy milyen mértékben javítja a modell generalizációs képességét - hiszen ha az adott transzformáció nem hatékony, akkor a modell túltanulását "segítheti".
+Milyen lépéseket javasol Karpathy egy neurális háló fejlesztésének "receptjében" (📄 A Recipe for Training Neural Networks by Andrej Karpathy)?
+A következő lépéseket javasolja:
+1. Become one with the data: A megvalósítás előtt célszerű megvizsgálni az adatokat, manuálisan keresni összefüggéseket, illetve az adatok tisztítását elvégezni.
+2. Set up the end-to-end training/evaluation skeleton + get dumb baselines: A pipeline megvalósítása, illetve baseline modellek létrehozása
+3. Overfit: Elegendően komplex modell definiálása/implementálása ahhoz, hogy az túltanuljon az adatokon.
+4. Regularize: Regularizációs technikák alkalmazása ahhoz, hogy elkerüljük a modell túlilleszkedését.
+5. Tune: Hiperparaméterek optimalizálásának elvégzése például Random Search-csel vagy Grid Search-csel.
+6. Squeeze out the juice: Ha megtaláltuk a legjobb modellt, akkor plusz trükkök alkalmazása (pl.: Ensembles, hosszabb tanítás alkalmazása).
 
 # 10. Előadás
 ## 10.1 RNN, figyelmi mechanizmus, Transformer bevezetés
