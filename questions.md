@@ -699,7 +699,7 @@ A _self-attention_ célja, hogy adott token reprezentációját az őt a szekven
 A három vektor szerepe a következő:
 - Query ($Q$) vektor: Az _attention mechanism_ során megfelel egy kérdésnek. Ez az, amely segítségével az adott token "kiderítheti", hogy mely más tokenek relevánsak az ő reprezentációját tekintve.
 - Key ($K$) vektor: A válasz vektor. Ez az, amivel a többi vektor úgymond válaszolni tud a kérdésre. Ez a válasz gyakorlatilag az, hogy az adott token, akihez a Key vektor tartozik releváns-e a Query vektorhoz tartozó token reprezentációját tekintve, vagy sem. Matematikailag a Query és Key vektorok dimenziója megegyezik, így a hasonlóság a skaláris szorzatukkal "mérhető".
-- Value ($V$) vektor: Megadja, hogy abban az esetben, ha a Key vektorhoz tartozó token releváns a Query vektor reprezentációját tekintve, akkor milyen érték adódjon hozzá a Query vektor reprezentációjához.
+- Value ($V$) vektor: Megadja, hogy abban az esetben, ha a Key vektorhoz tartozó token releváns a Query vektor reprezentációját tekintve, akkor milyen információ kerüljön be a Query-hez tartozó kimeneti (kontextusfüggő) tokenreprezentációba.
 
 # 11. Előadás
 ## 11.1 Transformerek és nagy nyelvi modellek
